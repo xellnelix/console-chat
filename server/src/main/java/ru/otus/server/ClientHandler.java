@@ -35,7 +35,11 @@ public class ClientHandler {
                             break;
                         }
                     }
-                    server.broadcastMessage(message);
+                    if (message.startsWith("/w")) {
+                        server.privateMessage(message.split(" ")[1], message.split(" ")[2]);
+                    } else {
+                        server.broadcastMessage(message);
+                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
