@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Network implements AutoCloseable {
     private Socket socket;
@@ -21,6 +22,7 @@ public class Network implements AutoCloseable {
         out = new DataOutputStream(socket.getOutputStream());
         new Thread(() -> {
             try {
+
                 while (true) {
                     String message = in.readUTF();
                     if (callback != null) {

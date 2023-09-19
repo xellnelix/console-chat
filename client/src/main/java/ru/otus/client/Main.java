@@ -13,7 +13,11 @@ public class Main {
                 }
             });
             network.connect(8085);
+            System.out.println("Введите имя: ");
             Scanner scanner = new Scanner(System.in);
+            String username = scanner.nextLine();
+            System.out.println("Соединение установлено");
+            network.sendMessage(username);
             while (true) {
                 String msg = scanner.nextLine();
                 network.sendMessage(msg);
