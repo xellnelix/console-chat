@@ -22,8 +22,7 @@ public class Network implements AutoCloseable {
         out = new DataOutputStream(socket.getOutputStream());
         new Thread(() -> {
             try {
-
-                while (true) {
+                while (socket.isConnected()) {
                     String message = in.readUTF();
                     if (callback != null) {
                         callback.call(message);

@@ -46,10 +46,10 @@ public class Server {
 		}
 	}
 
-	public synchronized void privateMessage(String user, String message) {
+	public synchronized void privateMessage(String user, String message, ClientHandler clientHandler) {
 		for (ClientHandler client : clients) {
 			if (client.getUsername().equals(user)) {
-				client.sendMessage("Message from " + user + ": " + message);
+				client.sendMessage("Message from " + clientHandler.getUsername() + ": " + message);
 			}
 		}
 	}

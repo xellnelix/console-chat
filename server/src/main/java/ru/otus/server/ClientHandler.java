@@ -29,16 +29,15 @@ public class ClientHandler {
 					String message = in.readUTF();
 					if (message.startsWith("/")) {
 						if (message.equals("/exit")) {
-							disconnect();
 							break;
 						}
-					}
-					if (message.startsWith("/w")) {
-						String[] personalMessage =  message.replaceAll("\\s+", " ").split(" ");
-						if (personalMessage.length != 3) {
-							out.writeUTF("Некорректное число");
+						if (message.startsWith("/w")) {
+							String[] personalMessage = message.replaceAll("\\s+", " ").split(" ");
+							if (personalMessage.length != 3) {
+								out.writeUTF("Некорректное число");
+							}
+							server.privateMessage(personalMessage[1], personalMessage[2], this);
 						}
-						server.privateMessage(message.split(" ")[1], message.split(" ")[2]);
 					} else {
 						server.broadcastMessage(message, this);
 					}
