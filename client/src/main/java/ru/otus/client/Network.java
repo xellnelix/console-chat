@@ -29,6 +29,7 @@ public class Network implements AutoCloseable {
                     }
                 }
             } catch (IOException e) {
+                e.printStackTrace();
                 throw new RuntimeException(e);
             } finally {
                 close();
