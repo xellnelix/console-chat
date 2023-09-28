@@ -70,7 +70,7 @@ public class Server {
 	public synchronized void kickClient(String username, ClientHandler clientHandler) {
 		for (int i = 0; i < clients.size(); i++) {
 				if (clients.get(i).getUsername().equals(username)) {
-					clients.get(i).sendMessage("тюльБАН");
+					clients.get(i).sendMessage("Вы были исключены администратором");
 					clients.get(i).disconnect();
 					getAuthenticationProvider().kick(username);
 				}
