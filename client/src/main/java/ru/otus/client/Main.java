@@ -1,6 +1,7 @@
 package ru.otus.client;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.Scanner;
 
 public class Main {
@@ -15,9 +16,13 @@ public class Main {
             network.connect(8080);
             Scanner scanner = new Scanner(System.in);
             System.out.println("Соединение установлено");
-            while (true) {
+            while (network.getSocket().isConnected()) {
                 String msg = scanner.nextLine();
-                network.sendMessage(msg);
+                try {
+                    network.sendMessage(msg);
+                } catch (SocketException e) {
+                    break;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

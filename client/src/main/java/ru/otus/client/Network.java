@@ -2,8 +2,10 @@ package ru.otus.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Scanner;
 
 public class Network implements AutoCloseable {
@@ -16,6 +18,10 @@ public class Network implements AutoCloseable {
         this.callback = callback;
     }
 
+    public Socket getSocket() {
+        return socket;
+    }
+
     public void connect(int port) throws IOException {
         socket = new Socket("localhost", port);
         in = new DataInputStream(socket.getInputStream());
@@ -23,9 +29,13 @@ public class Network implements AutoCloseable {
         new Thread(() -> {
             try {
                 while (socket.isConnected()) {
-                    String message = in.readUTF();
-                    if (callback != null) {
-                        callback.call(message);
+                    try {
+                        String message = in.readUTF();
+                        if (callback != null) {
+                            callback.call(message);
+                        }
+                    } catch (EOFException e) {
+                        break;
                     }
                 }
             } catch (IOException e) {
@@ -63,6 +73,12 @@ public class Network implements AutoCloseable {
     }
 
     public void sendMessage(String msg) throws IOException {
-        out.writeUTF(msg);
+        try {
+            out.writeUTF(msg);
+            out.flush();
+        } catch (IOException e) {
+            close();
+            throw new SocketException();
+        }
     }
 }
