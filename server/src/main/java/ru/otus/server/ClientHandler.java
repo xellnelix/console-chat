@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.List;
 
 public class ClientHandler {
@@ -29,8 +30,6 @@ public class ClientHandler {
 				communicateWithUser(server);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
-			} finally {
-				disconnect();
 			}
 		}).start();
 //		server.addClient(this);
@@ -38,26 +37,39 @@ public class ClientHandler {
 
 	private void communicateWithUser(Server server) throws IOException {
 		while (socket.isConnected()) {
-			String message = in.readUTF();
-			if (message.startsWith("/")) {
-				if (message.equals("/exit")) {
-					break;
-				}
-				if (message.startsWith("/w")) {
-					String[] personalMessage = message.replaceAll("\\s+", " ").split(" ");
-					if (personalMessage.length != 3) {
-						out.writeUTF("Некорректное число аргументов");
-						continue;
+			try {
+				String message = in.readUTF();
+				if (message.startsWith("/")) {
+					if (message.equals("/exit")) {
+						break;
 					}
-					server.privateMessage(personalMessage[1], personalMessage[2], this);
+					if (message.startsWith("/w")) {
+						String[] personalMessage = message.replaceAll("\\s+", " ").split(" ");
+						if (personalMessage.length != 3) {
+							out.writeUTF("Некорректное число аргументов");
+							continue;
+						}
+						server.privateMessage(personalMessage[1], personalMessage[2], this);
+					}
+					if (message.equals("/list")) {
+						List<String> userList = server.getUserList();
+						String joinedUsers = String.join(", ", userList);
+						sendMessage(joinedUsers);
+					}
+					if (message.startsWith("/kick") && server.getAuthenticationProvider().getRoleByUsername("admin") == Role.ADMIN) {
+						String[] kickCommand = message.replaceAll("\\s+", " ").split(" ");
+						System.out.println(kickCommand[1]);
+						if (kickCommand.length != 2) {
+							out.writeUTF("Некорректное число аргументов");
+							continue;
+						}
+						server.kickClient(kickCommand[1], this);
+					}
+				} else {
+					server.broadcastMessage(message, this);
 				}
-				if (message.equals("/list")) {
-					List<String> userList = server.getUserList();
-					String joinedUsers =  String.join(", ", userList);
-					sendMessage(joinedUsers);
-				}
-			} else {
-				server.broadcastMessage(message, this);
+			} catch (SocketException e) {
+				break;
 			}
 		}
 	}
@@ -75,11 +87,14 @@ public class ClientHandler {
 				case "/auth": {
 					String login = args[1];
 					String password = args[2];
+					if (login.equals("admin") && password.equals("admin")) {
+						server.getAuthenticationProvider().register("admin", "admin", "admin", Role.ADMIN);
+						this.username = "admin";
+					}
 					String username = server.getAuthenticationProvider().getUsernameByLoginAndPassword(login, password);
 					if (username == null || username.isBlank()) {
 						sendMessage("Указан неверный логин/пароль");
 					} else {
-
 						this.username = username;
 						sendMessage(username + ", добро пожаловать в чат!");
 						server.addClient(this);
@@ -90,7 +105,7 @@ public class ClientHandler {
 					String login = args[1];
 					String nick = args[2];
 					String password = args[3];
-					boolean isRegistered = server.getAuthenticationProvider().register(login, password, nick);
+					boolean isRegistered = server.getAuthenticationProvider().register(login, password, nick, Role.USER);
 					if (!isRegistered) {
 						sendMessage("Указаный логин/никнейм уже заняты");
 					} else {
@@ -135,10 +150,9 @@ public class ClientHandler {
 	public void sendMessage(String message) {
 		try {
 			out.writeUTF(message);
-			out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
-			disconnect();
+//			disconnect();
 		}
 	}
 }
