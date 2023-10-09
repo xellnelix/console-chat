@@ -48,7 +48,7 @@ public class ClientHandler implements Runnable {
                 case "/auth": {
                     String login = args[1];
                     String password = args[2];
-                    String username = server.authenticateUser(login, password);
+                    String username = server.getDatabase().authenticateUser(login, password);
                     if (username == null || username.isBlank()) {
                         sendMessage("Указан неверный логин/пароль");
                     } else {
@@ -62,7 +62,7 @@ public class ClientHandler implements Runnable {
                     String login = args[1];
                     String nick = args[2];
                     String password = args[3];
-                    boolean isRegistered = server.registerUser(login, password, nick);
+                    boolean isRegistered = server.getDatabase().registerUser(login, password, nick);
                     if (!isRegistered) {
                         sendMessage("Указаный логин/никнейм уже заняты");
                     } else {
@@ -100,7 +100,7 @@ public class ClientHandler implements Runnable {
                         String joinedUsers = String.join(", ", userList);
                         sendMessage(joinedUsers);
                     }
-                    if (message.startsWith("/kick") && server.checkUserAdmin(this.username)) {
+                    if (message.startsWith("/kick") && server.getDatabase().checkUserAdmin(this.username)) {
                         String[] kickCommand = message.replaceAll("\\s+", " ").split(" ");
                         if (kickCommand.length != 2) {
                             out.writeUTF("Некорректное число аргументов");
