@@ -1,9 +1,11 @@
 package ru.otus.server;
 
 public interface AuthenticationProvider {
-	String getUsernameByLoginAndPassword(String login, String username);
-	Role getRoleByUsername(String username);
+    String authenticateUser(String login, String password);
 
-	boolean register(String login, String password, String username, Role role);
-	void kick(String username);
+    boolean checkUserAdmin(String username);
+
+    boolean registerUser(String login, String password, String username);
+
+    void deleteUser(String username);
 }

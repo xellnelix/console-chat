@@ -3,23 +3,28 @@ package ru.otus.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 public class Server {
 	private final int port;
 	private final List<ClientHandler> clients;
-	private final AuthenticationProvider authenticationProvider;
+	static ExecutorService thread = Executors.newFixedThreadPool(8);
+	private final JdbcAuthenticationProvider database;
 
-	public AuthenticationProvider getAuthenticationProvider() {
-		return authenticationProvider;
-	}
 
-	public Server(int port, AuthenticationProvider authenticationProvider) {
+	public Server(int port, JdbcAuthenticationProvider database) throws SQLException {
 		this.port = port;
 		clients = new ArrayList<>();
-		this.authenticationProvider = authenticationProvider;
+		this.database = database;
+	}
+
+	public JdbcAuthenticationProvider getDatabase() {
+		return database;
 	}
 
 	public void start() {
@@ -27,9 +32,10 @@ public class Server {
 			System.out.println("Сервер запущен на порту " + port);
 			while (!server.isClosed()) {
 				Socket client = server.accept();
-				new ClientHandler(client, this);
+				thread.execute(new ClientHandler(client, this));
 			}
 		} catch (IOException e) {
+			thread.shutdown();
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
@@ -70,9 +76,9 @@ public class Server {
 	public synchronized void kickClient(String username, ClientHandler clientHandler) {
 		for (int i = 0; i < clients.size(); i++) {
 				if (clients.get(i).getUsername().equals(username)) {
+					database.deleteUser(username);
 					clients.get(i).sendMessage("Вы были исключены администратором");
 					clients.get(i).disconnect();
-					getAuthenticationProvider().kick(username);
 				}
 			}
 	}
